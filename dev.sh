@@ -49,8 +49,8 @@ get_state() {
 		MD5="md5"
 	fi
 	SRC_STATE=$(find -L ./ -type f -name "*.cpp" -exec $MD5 {} \;)
-	TXT_STATE=$(find -L ./ -type f -name "*.txt" -exec $MD5 {} \;)
-	echo "$SRC_STATE" "$TXT_STATE"
+	#TXT_STATE=$(find -L ./ -type f -name "*.txt" -exec $MD5 {} \;)
+	echo "$SRC_STATE" # "$TXT_STATE"
 }
 
 sync_sources() {
