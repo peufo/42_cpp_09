@@ -25,11 +25,24 @@ int main(int ac, char **av)
 {
     RPN rpn;
 
-    if (ac > 1)
+    if (ac > 2)
     {
-        double result = rpn.compute(av[1]);
-        std::cout << result << std::endl;
-        return 0;
+        std::cerr << "Error: Too much arguments" << std::endl;
+        return 1;
+    }
+    if (ac == 2)
+    {
+        try
+        {
+            double result = rpn.compute(av[1]);
+            std::cout << result << std::endl;
+            return 0;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << '\n';
+            return 1;
+        }
     }
 
     test("3 4 + 5 6 + *", 77);
@@ -42,5 +55,7 @@ int main(int ac, char **av)
     test("1 +", 0);
     test("1 1 1 + -", -1);
     test("1 1 + 1 -", 1);
+    test("hello", 1);
+    test("h e l l o", 1);
     return 0;
 }

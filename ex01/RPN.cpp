@@ -44,7 +44,8 @@ double RPN::compute(const std::string &str)
     while (!is.eof())
     {
         is >> value;
-        this->handleValue(value);
+        if (!is.fail())
+            this->handleValue(value);
     }
 
     if (this->empty())
