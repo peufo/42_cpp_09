@@ -1,11 +1,56 @@
-#include "DataBase.hpp"
+#include "BitcoinExchange.hpp"
 
-DataBase::DataBase(const char *filename, char separator, int maxAmount) : filename(filename), separator(separator), maxAmount(maxAmount)
+BitcoinExchange::BitcoinExchange()
+    : filename("data.csv"),
+      separator(','),
+      maxAmount(std::numeric_limits<int>::max())
 {
     this->loadFile();
 }
 
-entrie_t DataBase::parseLine(const std::string &line)
+BitcoinExchange::BitcoinExchange(const char *filename, char separator, int maxAmount)
+    : filename(filename),
+      separator(separator),
+      maxAmount(maxAmount)
+{
+    this->loadFile();
+}
+
+BitcoinExchange::BitcoinExchange(const BitcoinExchange &src)
+    : std::list<entrie_t>(src),
+      filename(src.filename),
+      separator(src.separator),
+      maxAmount(src.maxAmount)
+{
+}
+
+BitcoinExchange &BitcoinExchange::operator=(const BitcoinExchange &src)
+{
+    if (this == &src)
+        return *this;
+    this->filename = src.filename;
+    this->separator = src.separator;
+    this->maxAmount = src.maxAmount;
+    this->clear();
+    this->loadFile();
+    return *this;
+}
+
+BitcoinExchange::~BitcoinExchange()
+{
+}
+
+const entrie_t &BitcoinExchange::findEntrieBefore(const entrie_t &entrie) const
+{
+    for (BitcoinExchange::const_iterator i = this->end(); i != this->begin(); i--)
+    {
+        if (i->time <= entrie.time)
+            return (*i);
+    }
+    return this->front();
+}
+
+void BitcoinExchange::parseLine(const std::string &line)
 {
     std::istringstream is(line);
     char sepDate1, sepDate2;
@@ -41,13 +86,12 @@ entrie_t DataBase::parseLine(const std::string &line)
     date.tm_year = year - 1900;
     date.tm_mon = month - 1;
     date.tm_mday = day;
-    return (entrie_t){
-        .date = date,
-        .time = std::mktime(&date),
-        .amount = amount};
+    this->push_back((entrie_t){.date = date,
+                               .time = std::mktime(&date),
+                               .amount = amount});
 }
 
-void DataBase::loadFile()
+void BitcoinExchange::loadFile()
 {
     std::ifstream file(this->filename);
     if (!file.good())
@@ -61,7 +105,7 @@ void DataBase::loadFile()
         try
         {
             if (line.length())
-                this->push_back(parseLine(line));
+                this->parseLine(line);
         }
         catch (const std::exception &e)
         {
