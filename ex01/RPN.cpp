@@ -30,7 +30,7 @@ void RPN::handleValue(std::string &value)
 double RPN::takeTop()
 {
     if (!this->size())
-        throw std::invalid_argument("Missing value");
+        throw std::invalid_argument("Missing operand");
     double value = this->top();
     this->pop();
     return value;
