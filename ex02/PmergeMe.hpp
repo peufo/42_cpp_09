@@ -1,35 +1,49 @@
 #ifndef PMERGEME_HPP
 #define PMERGEME_HPP
 
-class PmergeMe
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <iomanip>
+#include <cmath>
+
+class Slice
 {
+
 private:
-protected:
+    Slice();
+
 public:
-    ~PmergeMe();
-    PmergeMe();
-    PmergeMe(const PmergeMe &src);
-    PmergeMe &operator=(const PmergeMe &src);
+    std::vector<int>::iterator begin;
+    std::vector<int>::iterator end;
+    ~Slice();
+    Slice(std::vector<int>::iterator &begin, std::vector<int>::iterator &end);
+    Slice(std::vector<int>::iterator &it);
+    Slice(const Slice &src);
+    Slice &operator=(const Slice &src);
 };
 
-PmergeMe::~PmergeMe()
+class Pair
 {
-}
+private:
+    int value;
+    Pair *a;
+    Pair *b;
+    Pair();
 
-PmergeMe::PmergeMe()
-{
-}
+public:
+    ~Pair();
+    Pair(int value);
+    Pair(Pair &a, Pair &b);
+    Pair(Pair &b);
+    Pair(const Pair &src);
+    void swap();
+    Pair &operator=(const Pair &src);
+};
 
-PmergeMe::PmergeMe(const PmergeMe &src)
-{
-}
+std::ostream &operator<<(std::ostream &os, Slice &slice);
+std::ostream &operator<<(std::ostream &os, std::vector<Slice> &s);
 
-PmergeMe &PmergeMe::operator=(const PmergeMe &src)
-{
-    if (this == &src)
-        return *this;
-
-    return *this;
-}
+void mergeInsert(std::vector<Slice> &s);
 
 #endif

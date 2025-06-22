@@ -73,6 +73,16 @@
         "ratio": "cpp",
         "thread": "cpp",
         "sstream": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "complex": "cpp",
+        "forward_list": "cpp",
+        "print": "cpp",
+        "stack": "cpp",
+        "chrono": "cpp",
+        "unordered_set": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "cinttypes": "cpp",
+        "typeindex": "cpp"
     }
 }

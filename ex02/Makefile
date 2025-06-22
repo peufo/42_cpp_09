@@ -1,7 +1,7 @@
 NAME			=	PmergeMe
 DIR_SRC			=	./
 DIR_BUILD		=	./build
-SOURCES			=	main.cpp 
+SOURCES			=	PmergeMe.cpp main.cpp 
 SOURCES_NAME	=	$(basename $(SOURCES))
 OBJECTS			=	$(addsuffix .o, $(addprefix $(DIR_BUILD)/, $(SOURCES_NAME)))
 CFLAGS			=	-Wall -Wextra -Werror -std=c++98 -g
