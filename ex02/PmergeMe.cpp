@@ -15,7 +15,7 @@ std::ostream &operator<<(std::ostream &os, Pair &pair)
     int padding = 1;
     for (int i = 0; i < deep; i++)
         padding = padding * 2 + 1;
-    writeN(os, " ", padding) << pair.value << '\n';
+    os << std::setw(padding + 1) << pair.value << '\n';
     std::vector<Pair *> pairs;
     pairs.push_back(pair.a);
     pairs.push_back(pair.b);
@@ -40,23 +40,22 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
         os << "╭";
         writeN(os, "─", padding) << "┴";
         writeN(os, "─", padding) << "╮";
-        if (it != pairs.end() - 1)
+        if (it != pairs.end() - 2)
             writeN(os, " ", padding2);
     }
     os << '\n';
-    writeN(os, " ", padding);
     for (std::vector<Pair *>::iterator it = pairs.begin(); it != pairs.end(); it++)
     {
         if (*it)
         {
-            os << (*it)->value;
+            os << std::setw(padding + 1) << (*it)->value;
             children.push_back((*it)->a);
             children.push_back((*it)->b);
         }
         else
             os << 'x';
         if (it != pairs.end() - 1)
-            writeN(os, " ", padding * 2 + 1);
+            writeN(os, " ", padding + 1);
     }
     os << '\n';
     if (children.size())
