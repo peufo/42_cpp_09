@@ -28,7 +28,7 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
     std::vector<Pair *> children;
     if (pairs.size() == 0 || !pairs[1])
         return os;
-    int deep = pairs[0]->getDeep();
+    int deep = pairs[1]->getDeep();
     int padding = 1;
     for (int i = 0; i < deep; i++)
         padding = padding * 2 + 1;
@@ -53,7 +53,7 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
             children.push_back((*it)->b);
         }
         else
-            os << 'x';
+            os << std::setw(padding + 1) << 'x';
         if (it != pairs.end() - 1)
             writeN(os, " ", padding + 1);
     }
@@ -62,58 +62,6 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
         os << children;
     return os;
 }
-
-std::ostream &operator<<(std::ostream &os, Slice &slice)
-{
-    os << "[" << std::setw(2) << *slice.begin;
-    for (std::vector<int>::iterator it = slice.begin + 1; it != slice.end; it++)
-    {
-        os << ", " << std::setw(2) << *it;
-    }
-    return os << "]";
-}
-
-std::ostream &operator<<(std::ostream &os, std::vector<Slice> &s)
-{
-    for (std::vector<Slice>::iterator it = s.begin(); it != s.end(); it++)
-    {
-        os << *it << '\n';
-    }
-    return os;
-}
-
-// ================= class Pair ==========================
-
-Slice::~Slice() {}
-
-Slice::Slice()
-{
-}
-
-Slice::Slice(std::vector<int>::iterator &begin, std::vector<int>::iterator &end)
-    : begin(begin),
-      end(end)
-{
-}
-
-Slice::Slice(std::vector<int>::iterator &it) : begin(it), end(it + 1)
-{
-}
-
-Slice::Slice(const Slice &src) : begin(src.begin), end(src.end)
-{
-}
-
-Slice &Slice::operator=(const Slice &src)
-{
-    if (this == &src)
-        return *this;
-    this->begin = src.begin;
-    this->end = src.end;
-    return *this;
-}
-
-// ================= class Pair ==========================
 
 Pair::~Pair()
 {
@@ -150,6 +98,7 @@ void Pair::swap()
     Pair *tmp = this->a;
     this->a = this->b;
     this->b = tmp;
+    this->value = this->b->value;
 }
 
 int Pair::getDeep()
@@ -174,66 +123,24 @@ Pair &Pair::operator=(const Pair &src)
     return *this;
 }
 
-std::vector<Slice>::iterator findInsertionPoint(std::vector<Slice> &slices, std::vector<Slice>::iterator &toInsert)
+std::vector<Pair>::iterator findInsertionPoint(std::vector<Pair> &pairs, std::vector<Pair>::iterator &toInsert)
 {
-    std::vector<Slice>::iterator left = slices.begin();
-    std::vector<Slice>::iterator right = slices.end();
+    std::vector<Pair>::iterator left = pairs.begin();
+    std::vector<Pair>::iterator right = pairs.end();
 
     while (left < right)
     {
         size_t size = right - left;
-        std::vector<Slice>::iterator it = left + size / 2;
-        if (*(it->end - 1) < *(toInsert->end - 1))
-            left = it;
+        std::vector<Pair>::iterator it = left + size / 2;
+        if (it->value < toInsert->value)
+            left = it + 1;
         else
-            right = it - 1;
+            right = it;
     }
     return left;
 }
 
-void mergeInsert(std::vector<Slice> &slices)
-{
-
-    std::cout << "slices before:\n"
-              << slices << std::endl;
-
-    std::vector<Slice>::iterator last = slices.size() & 1 ? slices.end() - 1 : slices.end();
-    std::vector<Slice> paires;
-
-    for (std::vector<Slice>::iterator it = slices.begin(); it != last; it += 2)
-    {
-        std::vector<Slice>::iterator next = it + 1;
-        if (*(it->end - 1) > *(next->end - 1))
-            std::swap_ranges(it->begin, it->end, next->begin);
-        paires.push_back(Slice(it->begin, next->end));
-    }
-
-    std::cout << "paired:\n"
-              << paires << std::endl;
-    if (paires.size() < 2)
-        return;
-
-    mergeInsert(paires);
-    std::cout << "slices after:\n"
-              << paires << std::endl;
-
-    std::vector<Slice> toInsert;
-    for (std::vector<Slice>::iterator it = slices.begin() + 2; it != last; it += 2)
-    {
-        toInsert.push_back(*it);
-        slices.erase(it);
-    }
-
-    // TODO: use determined order of insertion
-    // for (std::vector<Slice>::iterator it = toInsert.begin(); it != toInsert.end(); it++)
-    // {
-    //     std::vector<Slice>::iterator insertionPoint = findInsertionPoint(slices, it);
-
-    // TODO: insert
-    // }
-}
-
-Pair buildPairsTree(std::vector<Pair> &pairs)
+std::vector<Pair> buildPairsTree(std::vector<Pair> &pairs)
 {
     std::vector<Pair> parents;
     std::vector<Pair>::iterator last = pairs.size() & 1 ? pairs.end() - 1 : pairs.end();
@@ -242,13 +149,49 @@ Pair buildPairsTree(std::vector<Pair> &pairs)
     if (last != pairs.end())
         parents.push_back(Pair(NULL, &(*last)));
     if (parents.size() == 1)
-        return parents[0];
+        return parents;
     return buildPairsTree(parents);
 }
 
-void mergeInsertPairs(std::vector<Pair> &pairs)
+std::vector<Pair> sortTree(std::vector<Pair> &sorted)
 {
-    Pair tree = buildPairsTree(pairs);
+    std::vector<Pair> biggers;
+    std::vector<Pair> lowers;
 
-    std::cout << tree << std::endl;
+    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
+        std::cout << *it << std::endl;
+
+    if (!sorted[0].b)
+        return sorted;
+    if (sorted[0].a)
+        biggers.push_back(*sorted[0].a);
+    biggers.push_back(*sorted[0].b);
+    for (std::vector<Pair>::iterator it = sorted.begin() + 1; it != sorted.end(); it++)
+    {
+        if (it->a)
+            lowers.push_back(*it->a);
+        if (it->b)
+            biggers.push_back(*it->b);
+    }
+
+    // TODO: Respect spécial insert order
+    for (std::vector<Pair>::iterator it = lowers.begin(); it != lowers.end(); it++)
+    {
+        std::vector<Pair>::iterator insertionPoint = findInsertionPoint(biggers, it);
+        biggers.insert(insertionPoint, *it);
+    }
+    return sortTree(biggers);
+}
+
+void mergeInsert(std::vector<Pair> &pairs)
+{
+    std::vector<Pair> tree = buildPairsTree(pairs);
+    std::cout << tree[0] << std::endl;
+    std::vector<Pair> sorted = sortTree(tree);
+    std::cout << "END" << std::endl;
+    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
+    {
+        std::cout << it->value << ' ';
+    }
+    std::cout << std::endl;
 }

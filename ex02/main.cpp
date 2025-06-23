@@ -25,13 +25,10 @@ int main(int ac, char **av)
     int *data = values.data();
     (void)data;
 
-    std::vector<Slice> s;
-    std::vector<Pair> p;
+    std::vector<Pair> pairs;
     for (std::vector<int>::iterator it = values.begin(); it != values.end(); it++)
     {
-        s.push_back(Slice(it));
-        p.push_back(Pair(*it));
+        pairs.push_back(Pair(*it));
     }
-    // mergeInsert(s);
-    mergeInsertPairs(p);
+    mergeInsert(pairs);
 }

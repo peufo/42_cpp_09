@@ -7,22 +7,6 @@
 #include <iomanip>
 #include <cmath>
 
-class Slice
-{
-
-private:
-    Slice();
-
-public:
-    std::vector<int>::iterator begin;
-    std::vector<int>::iterator end;
-    ~Slice();
-    Slice(std::vector<int>::iterator &begin, std::vector<int>::iterator &end);
-    Slice(std::vector<int>::iterator &it);
-    Slice(const Slice &src);
-    Slice &operator=(const Slice &src);
-};
-
 class Pair
 {
 private:
@@ -44,10 +28,7 @@ public:
 
 std::ostream &operator<<(std::ostream &os, Pair &pair);
 std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs);
-std::ostream &operator<<(std::ostream &os, Slice &slice);
-std::ostream &operator<<(std::ostream &os, std::vector<Slice> &s);
 
-void mergeInsert(std::vector<Slice> &s);
-void mergeInsertPairs(std::vector<Pair> &pairs);
+void mergeInsert(std::vector<Pair> &pairs);
 
 #endif
