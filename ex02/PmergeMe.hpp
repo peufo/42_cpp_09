@@ -35,6 +35,7 @@ public:
     ~Pair();
     Pair(int value);
     Pair(Pair &a, Pair &b);
+    Pair(Pair *a, Pair *b);
     Pair(const Pair &src);
     void swap();
     int getDeep();

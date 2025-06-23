@@ -28,7 +28,7 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
     std::vector<Pair *> children;
     if (pairs.size() == 0 || !pairs[1])
         return os;
-    int deep = pairs[1]->getDeep();
+    int deep = pairs[0]->getDeep();
     int padding = 1;
     for (int i = 0; i < deep; i++)
         padding = padding * 2 + 1;
@@ -44,7 +44,6 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
             writeN(os, " ", padding2);
     }
     os << '\n';
-
     writeN(os, " ", padding);
     for (std::vector<Pair *>::iterator it = pairs.begin(); it != pairs.end(); it++)
     {
@@ -60,7 +59,6 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
             writeN(os, " ", padding * 2 + 1);
     }
     os << '\n';
-
     if (children.size())
         os << children;
     return os;
@@ -129,6 +127,14 @@ Pair::Pair(int value) : value(value), a(NULL), b(NULL)
 Pair::Pair(Pair &a, Pair &b) : value(b.value), a(&a), b(&b)
 {
     if (a.value > b.value)
+        this->swap();
+}
+
+Pair::Pair(Pair *a, Pair *b) : value(b->value), a(a), b(b)
+{
+    if (this->a && this->b && this->a->value > this->b->value)
+        this->swap();
+    if (this->a && !this->b)
         this->swap();
 }
 
@@ -235,7 +241,7 @@ Pair buildPairsTree(std::vector<Pair> &pairs)
     for (std::vector<Pair>::iterator it = pairs.begin(); it != last; it += 2)
         parents.push_back(Pair(*it, *(it + 1)));
     if (last != pairs.end())
-        parents.push_back(Pair(*last));
+        parents.push_back(Pair(NULL, &(*last)));
     if (parents.size() == 1)
         return parents[0];
     return buildPairsTree(parents);
