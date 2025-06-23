@@ -1,5 +1,71 @@
 #include "PmergeMe.hpp"
 
+static std::ostream &writeN(std::ostream &os, const std::string &value, int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        os << value;
+    }
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, Pair &pair)
+{
+    int deep = pair.getDeep();
+    int padding = 1;
+    for (int i = 0; i < deep; i++)
+        padding = padding * 2 + 1;
+    writeN(os, " ", padding) << pair.value << '\n';
+    std::vector<Pair *> pairs;
+    pairs.push_back(pair.a);
+    pairs.push_back(pair.b);
+    os << pairs;
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
+{
+    std::vector<Pair *> children;
+    if (pairs.size() == 0 || !pairs[1])
+        return os;
+    int deep = pairs[1]->getDeep();
+    int padding = 1;
+    for (int i = 0; i < deep; i++)
+        padding = padding * 2 + 1;
+    int padding2 = padding * 2 + 1;
+
+    writeN(os, " ", padding);
+    for (std::vector<Pair *>::iterator it = pairs.begin(); it != pairs.end(); it += 2)
+    {
+        os << "╭";
+        writeN(os, "─", padding) << "┴";
+        writeN(os, "─", padding) << "╮";
+        if (it != pairs.end() - 1)
+            writeN(os, " ", padding2);
+    }
+    os << '\n';
+
+    writeN(os, " ", padding);
+    for (std::vector<Pair *>::iterator it = pairs.begin(); it != pairs.end(); it++)
+    {
+        if (*it)
+        {
+            os << (*it)->value;
+            children.push_back((*it)->a);
+            children.push_back((*it)->b);
+        }
+        else
+            os << 'x';
+        if (it != pairs.end() - 1)
+            writeN(os, " ", padding * 2 + 1);
+    }
+    os << '\n';
+
+    if (children.size())
+        os << children;
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, Slice &slice)
 {
     os << "[" << std::setw(2) << *slice.begin;
@@ -60,10 +126,6 @@ Pair::Pair(int value) : value(value), a(NULL), b(NULL)
 {
 }
 
-Pair::Pair(Pair &b) : value(b.value), a(NULL), b(&b)
-{
-}
-
 Pair::Pair(Pair &a, Pair &b) : value(b.value), a(&a), b(&b)
 {
     if (a.value > b.value)
@@ -83,6 +145,18 @@ void Pair::swap()
     Pair *tmp = this->a;
     this->a = this->b;
     this->b = tmp;
+}
+
+int Pair::getDeep()
+{
+    int deep = 0;
+    Pair *p = this->b;
+    while (p)
+    {
+        deep++;
+        p = p->b;
+    }
+    return deep;
 }
 
 Pair &Pair::operator=(const Pair &src)
@@ -150,5 +224,26 @@ void mergeInsert(std::vector<Slice> &slices)
     // {
     //     std::vector<Slice>::iterator insertionPoint = findInsertionPoint(slices, it);
 
+    // TODO: insert
     // }
+}
+
+Pair buildPairsTree(std::vector<Pair> &pairs)
+{
+    std::vector<Pair> parents;
+    std::vector<Pair>::iterator last = pairs.size() & 1 ? pairs.end() - 1 : pairs.end();
+    for (std::vector<Pair>::iterator it = pairs.begin(); it != last; it += 2)
+        parents.push_back(Pair(*it, *(it + 1)));
+    if (last != pairs.end())
+        parents.push_back(Pair(*last));
+    if (parents.size() == 1)
+        return parents[0];
+    return buildPairsTree(parents);
+}
+
+void mergeInsertPairs(std::vector<Pair> &pairs)
+{
+    Pair tree = buildPairsTree(pairs);
+
+    std::cout << tree << std::endl;
 }

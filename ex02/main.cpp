@@ -32,5 +32,6 @@ int main(int ac, char **av)
         s.push_back(Slice(it));
         p.push_back(Pair(*it));
     }
-    mergeInsert(s);
+    // mergeInsert(s);
+    mergeInsertPairs(p);
 }
