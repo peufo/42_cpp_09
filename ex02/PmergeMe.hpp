@@ -26,9 +26,10 @@ public:
     Pair &operator=(const Pair &src);
 };
 
+std::ostream &operator<<(std::ostream &os, std::vector<int> &values);
 std::ostream &operator<<(std::ostream &os, Pair &pair);
 std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs);
 
-void mergeInsert(std::vector<Pair> &pairs);
+void mergeInsert(std::vector<int> &src);
 
 #endif

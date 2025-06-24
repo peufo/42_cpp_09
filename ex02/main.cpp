@@ -22,13 +22,12 @@ int main(int ac, char **av)
     std::vector<int> values;
     if (!parserArgs(ac, av, values))
         return 1;
-    int *data = values.data();
-    (void)data;
-
-    std::vector<Pair> pairs;
-    for (std::vector<int>::iterator it = values.begin(); it != values.end(); it++)
+    if (!values.size())
     {
-        pairs.push_back(Pair(*it));
+        std::cout << "Nothing to sort !" << std::endl;
+        return 0;
     }
-    mergeInsert(pairs);
+    mergeInsert(values);
+
+    return 1;
 }

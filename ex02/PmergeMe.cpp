@@ -3,9 +3,7 @@
 static std::ostream &writeN(std::ostream &os, const std::string &value, int n)
 {
     for (int i = 0; i < n; i++)
-    {
         os << value;
-    }
     return os;
 }
 
@@ -20,6 +18,20 @@ std::ostream &operator<<(std::ostream &os, Pair &pair)
     pairs.push_back(pair.a);
     pairs.push_back(pair.b);
     os << pairs;
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, std::vector<int> &values)
+{
+    if (!values.size())
+    {
+        os << "[empty array]" << std::endl;
+        return os;
+    }
+    os << "[" << values[0];
+    for (std::vector<int>::iterator it = values.begin() + 1; it != values.end(); it++)
+        os << " " << *it;
+    os << "]" << std::endl;
     return os;
 }
 
@@ -73,7 +85,7 @@ Pair::Pair(int value) : value(value), a(NULL), b(NULL)
 
 Pair::Pair(Pair &a, Pair &b) : value(b.value), a(&a), b(&b)
 {
-    if (a.value > b.value)
+    if (this->a->value > this->b->value)
         this->swap();
 }
 
@@ -140,7 +152,45 @@ std::vector<Pair>::iterator findInsertionPoint(std::vector<Pair> &pairs, std::ve
     return left;
 }
 
-std::vector<Pair> buildPairsTree(std::vector<Pair> &pairs)
+void readValues(std::vector<int> &src, std::vector<Pair> &pairs)
+{
+    for (std::vector<int>::iterator it = src.begin(); it != src.end(); it++)
+        pairs.push_back(Pair(*it));
+}
+
+void writeResult(std::vector<Pair> &sorted, std::vector<int> &result)
+{
+    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
+        result.push_back(it->value);
+}
+
+static void sortTree(std::vector<Pair> &sorted, std::vector<int> &result)
+{
+    std::vector<Pair> biggers;
+    std::vector<Pair> lowers;
+
+    if (!sorted[0].b)
+        return writeResult(sorted, result);
+    if (sorted[0].a)
+        biggers.push_back(*(sorted[0].a));
+    biggers.push_back(*sorted[0].b);
+    for (std::vector<Pair>::iterator it = sorted.begin() + 1; it != sorted.end(); it++)
+    {
+        if (it->a)
+            lowers.push_back(*it->a);
+        biggers.push_back(*it->b);
+    }
+
+    // TODO: Respect special insert order
+    for (std::vector<Pair>::iterator it = lowers.begin(); it != lowers.end(); it++)
+    {
+        std::vector<Pair>::iterator insertionPoint = findInsertionPoint(biggers, it);
+        biggers.insert(insertionPoint, *it);
+    }
+    sortTree(biggers, result);
+}
+
+static void buildPairsTree(std::vector<Pair> &pairs, std::vector<int> &result)
 {
     std::vector<Pair> parents;
     std::vector<Pair>::iterator last = pairs.size() & 1 ? pairs.end() - 1 : pairs.end();
@@ -148,50 +198,17 @@ std::vector<Pair> buildPairsTree(std::vector<Pair> &pairs)
         parents.push_back(Pair(*it, *(it + 1)));
     if (last != pairs.end())
         parents.push_back(Pair(NULL, &(*last)));
-    if (parents.size() == 1)
-        return parents;
-    return buildPairsTree(parents);
+    if (parents.size() > 1)
+        return buildPairsTree(parents, result);
+    std::cout << parents[0] << std::endl;
+    sortTree(parents, result);
 }
 
-std::vector<Pair> sortTree(std::vector<Pair> &sorted)
+void mergeInsert(std::vector<int> &src)
 {
-    std::vector<Pair> biggers;
-    std::vector<Pair> lowers;
-
-    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
-        std::cout << *it << std::endl;
-
-    if (!sorted[0].b)
-        return sorted;
-    if (sorted[0].a)
-        biggers.push_back(*sorted[0].a);
-    biggers.push_back(*sorted[0].b);
-    for (std::vector<Pair>::iterator it = sorted.begin() + 1; it != sorted.end(); it++)
-    {
-        if (it->a)
-            lowers.push_back(*it->a);
-        if (it->b)
-            biggers.push_back(*it->b);
-    }
-
-    // TODO: Respect spécial insert order
-    for (std::vector<Pair>::iterator it = lowers.begin(); it != lowers.end(); it++)
-    {
-        std::vector<Pair>::iterator insertionPoint = findInsertionPoint(biggers, it);
-        biggers.insert(insertionPoint, *it);
-    }
-    return sortTree(biggers);
-}
-
-void mergeInsert(std::vector<Pair> &pairs)
-{
-    std::vector<Pair> tree = buildPairsTree(pairs);
-    std::cout << tree[0] << std::endl;
-    std::vector<Pair> sorted = sortTree(tree);
-    std::cout << "END" << std::endl;
-    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
-    {
-        std::cout << it->value << ' ';
-    }
-    std::cout << std::endl;
+    std::vector<int> result;
+    std::vector<Pair> pairs;
+    readValues(src, pairs);
+    buildPairsTree(pairs, result);
+    std::cout << result << std::endl;
 }
