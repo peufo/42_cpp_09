@@ -193,7 +193,7 @@ static void writeResult(std::vector<Pair> &sorted, std::vector<int> &result)
 static std::vector<Pair>::iterator findInsertionPoint(std::vector<Pair> &pairs, Pair &toInsert, size_t limitRight)
 {
     std::vector<Pair>::iterator left = pairs.begin();
-    std::vector<Pair>::iterator right = pairs.begin() + limitRight;
+    std::vector<Pair>::iterator right = pairs.begin() + limitRight + 1;
     while (left < right)
     {
         size_t size = right - left;
@@ -267,15 +267,41 @@ static void buildPairsTree(std::vector<Pair> &pairs, std::vector<int> &result)
     sortTree(parents, result);
 }
 
+static timeval getTime()
+{
+    timeval now;
+    gettimeofday(&now, NULL);
+    return now;
+}
+
+static double msElapsedFrom(timeval start)
+{
+    timeval now;
+
+    gettimeofday(&now, NULL);
+    long seconds = now.tv_sec - start.tv_sec;
+    long microseconds = now.tv_usec - start.tv_usec;
+    return (seconds * 1000) + (static_cast<double>(microseconds) / 1000);
+}
+
 void mergeInsert(std::vector<int> &src)
 {
     DEBUG(compPairing = 0;)
     DEBUG(compInsertion = 0;)
+
     std::vector<int> result;
     std::vector<Pair> pairs;
+    timeval start = getTime();
     readValues(src, pairs);
     buildPairsTree(pairs, result);
-    DEBUG(std::cout << "\nSorted: ";)
-    std::cout << result << std::endl;
-    DEBUG(std::cout << "Comparison: " << compPairing << " pairing + " << compInsertion << " insertion = " << compPairing + compInsertion << std::endl;)
+    double elapsed = msElapsedFrom(start);
+
+    DEBUG(std::cout << "\nComparison: "
+                    << compPairing << " pairing + "
+                    << compInsertion << " insertion = "
+                    << compPairing + compInsertion << std::endl;)
+
+    std::cout << "Before: " << src << std::endl;
+    std::cout << "After:  " << result << std::endl;
+    std::cout << "Time to process " << src.size() << " elements with std::vector : " << elapsed << " ms" << std::endl;
 }

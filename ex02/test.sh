@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for n in {1..10}
+for n in {1..10000..7}
 do
     VALUES=$(shuf -i "1-$n")
     SORTED=$(echo "$VALUES" | sort -n | xargs)
