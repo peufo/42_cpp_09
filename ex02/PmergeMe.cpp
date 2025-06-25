@@ -1,5 +1,8 @@
 #include "PmergeMe.hpp"
 
+int compPairing = 0;
+int compInsertion = 0;
+
 static std::ostream &writeN(std::ostream &os, const std::string &value, int n)
 {
     for (int i = 0; i < n; i++)
@@ -17,30 +20,39 @@ std::ostream &operator<<(std::ostream &os, Pair &pair)
     std::vector<Pair *> pairs;
     pairs.push_back(pair.a);
     pairs.push_back(pair.b);
-    os << pairs;
-    return os;
+    return os << pairs;
 }
 
 std::ostream &operator<<(std::ostream &os, std::vector<int> &values)
 {
-    if (!values.size())
-    {
-        os << "[empty array]" << std::endl;
-        return os;
-    }
-    os << "[" << values[0];
-    for (std::vector<int>::iterator it = values.begin() + 1; it != values.end(); it++)
-        os << " " << *it;
-    os << "]" << std::endl;
+    for (std::vector<int>::iterator it = values.begin(); it != values.end(); it++)
+        os << std::setw(4) << *it;
     return os;
+}
+
+std::ostream &operator<<(std::ostream &os, std::vector<Pair> &pairs)
+{
+    std::vector<int> values;
+    writeResult(pairs, values);
+    os << values;
+    return os;
+}
+
+Pair *getPairNoNull(std::vector<Pair *> &pairs)
+{
+    for (std::vector<Pair *>::iterator it = pairs.begin(); it != pairs.end(); it++)
+        if (*it)
+            return *it;
+    return NULL;
 }
 
 std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
 {
     std::vector<Pair *> children;
-    if (pairs.size() == 0 || !pairs[1])
+    Pair *pair = getPairNoNull(pairs);
+    if (!pair)
         return os;
-    int deep = pairs[1]->getDeep();
+    int deep = pair->getDeep();
     int padding = 1;
     for (int i = 0; i < deep; i++)
         padding = padding * 2 + 1;
@@ -65,7 +77,11 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
             children.push_back((*it)->b);
         }
         else
+        {
             os << std::setw(padding + 1) << 'x';
+            children.push_back(NULL);
+            children.push_back(NULL);
+        }
         if (it != pairs.end() - 1)
             writeN(os, " ", padding + 1);
     }
@@ -85,15 +101,17 @@ Pair::Pair(int value) : value(value), a(NULL), b(NULL)
 
 Pair::Pair(Pair &a, Pair &b) : value(b.value), a(&a), b(&b)
 {
+    compPairing++;
     if (this->a->value > this->b->value)
         this->swap();
 }
 
 Pair::Pair(Pair *a, Pair *b) : value(b->value), a(a), b(b)
 {
-    if (this->a && this->b && this->a->value > this->b->value)
-        this->swap();
-    if (this->a && !this->b)
+    if (!this->a || !this->b)
+        return;
+    compPairing++;
+    if (this->a->value > this->b->value)
         this->swap();
 }
 
@@ -135,21 +153,47 @@ Pair &Pair::operator=(const Pair &src)
     return *this;
 }
 
-std::vector<Pair>::iterator findInsertionPoint(std::vector<Pair> &pairs, std::vector<Pair>::iterator &toInsert)
+std::vector<Pair>::iterator findInsertionPoint(std::vector<Pair> &pairs, Pair &toInsert, size_t limitRight)
 {
     std::vector<Pair>::iterator left = pairs.begin();
-    std::vector<Pair>::iterator right = pairs.end();
+    std::vector<Pair>::iterator right = pairs.begin() + limitRight;
+
+    std::cout << "Right: " << right->value << std::endl;
 
     while (left < right)
     {
         size_t size = right - left;
         std::vector<Pair>::iterator it = left + size / 2;
-        if (it->value < toInsert->value)
+        compInsertion++;
+        std::cout << "Compare(" << it->value << " > " << toInsert.value << ")" << std::endl;
+        if (it->value <= toInsert.value)
             left = it + 1;
         else
             right = it;
     }
     return left;
+}
+
+void setSpecialOrder(int len, std::vector<size_t> &order)
+{
+    int power2 = 1;
+    int groupSize = 0;
+    int n = 0;
+
+    while (n < len)
+    {
+        power2 *= 2;
+        groupSize = power2 - groupSize;
+        if (n + groupSize > len)
+            groupSize = len - n;
+        int index = n + groupSize - 1;
+        while (index >= n)
+        {
+            order.push_back(index);
+            index--;
+        }
+        n += groupSize;
+    }
 }
 
 void readValues(std::vector<int> &src, std::vector<Pair> &pairs)
@@ -164,29 +208,50 @@ void writeResult(std::vector<Pair> &sorted, std::vector<int> &result)
         result.push_back(it->value);
 }
 
+static void insertInBiggers(Pair &pair, std::vector<Pair> &biggers, size_t limitRight)
+{
+    std::vector<Pair>::iterator insertionPoint = findInsertionPoint(biggers, pair, limitRight);
+    std::cout << std::setw(5) << pair.value << " -> " << biggers << std::endl;
+    biggers.insert(insertionPoint, pair);
+}
+
 static void sortTree(std::vector<Pair> &sorted, std::vector<int> &result)
 {
     std::vector<Pair> biggers;
     std::vector<Pair> lowers;
+    std::vector<size_t> limitsRight;
 
+    std::cout << std::endl;
     if (!sorted[0].b)
         return writeResult(sorted, result);
     if (sorted[0].a)
         biggers.push_back(*(sorted[0].a));
-    biggers.push_back(*sorted[0].b);
+    size_t biggerIndex = biggers.size();
+
+    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
+        biggers.push_back(*it->b);
+
     for (std::vector<Pair>::iterator it = sorted.begin() + 1; it != sorted.end(); it++)
     {
         if (it->a)
+        {
             lowers.push_back(*it->a);
-        biggers.push_back(*it->b);
+            limitsRight.push_back(biggerIndex);
+        }
+        biggerIndex++;
     }
 
-    // TODO: Respect special insert order
-    for (std::vector<Pair>::iterator it = lowers.begin(); it != lowers.end(); it++)
-    {
-        std::vector<Pair>::iterator insertionPoint = findInsertionPoint(biggers, it);
-        biggers.insert(insertionPoint, *it);
-    }
+    std::cout << "Pending: " << lowers << std::endl;
+
+    size_t nbInserted = 0;
+    std::vector<size_t> order;
+    setSpecialOrder(lowers.size(), order);
+    for (size_t i = 0; i < lowers.size(); i++)
+        insertInBiggers(lowers[order[i]], biggers, limitsRight[order[i]] + nbInserted++);
+
+    // for (size_t i = 0; i < lowers.size(); i++)
+    //     insertInBiggers(lowers[i], biggers, limitsRight[i] + nbInserted++);
+
     sortTree(biggers, result);
 }
 
@@ -210,5 +275,10 @@ void mergeInsert(std::vector<int> &src)
     std::vector<Pair> pairs;
     readValues(src, pairs);
     buildPairsTree(pairs, result);
-    std::cout << result << std::endl;
+    std::cout << "\nSorted:  " << result << std::endl;
+    std::cout << "Comparison: "
+              << compPairing << " pairing + "
+              << compInsertion << " insertion = "
+              << compPairing + compInsertion
+              << std::endl;
 }

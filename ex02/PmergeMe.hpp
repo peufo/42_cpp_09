@@ -26,10 +26,16 @@ public:
     Pair &operator=(const Pair &src);
 };
 
-std::ostream &operator<<(std::ostream &os, std::vector<int> &values);
-std::ostream &operator<<(std::ostream &os, Pair &pair);
-std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs);
-
 void mergeInsert(std::vector<int> &src);
+
+std::ostream &operator<<(std::ostream &os, Pair &pair);
+// TODO: templates ?
+std::ostream &operator<<(std::ostream &os, std::vector<int> &values);
+std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs);
+std::ostream &operator<<(std::ostream &os, std::vector<Pair> &pairs);
+
+// Utils
+void readValues(std::vector<int> &src, std::vector<Pair> &pairs);
+void writeResult(std::vector<Pair> &sorted, std::vector<int> &result);
 
 #endif
