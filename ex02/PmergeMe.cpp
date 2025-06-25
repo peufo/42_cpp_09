@@ -152,6 +152,10 @@ Pair &Pair::operator=(const Pair &src)
     return *this;
 }
 
+//*************************************************************************
+//*******************              UTILS              *********************
+//*************************************************************************
+
 void setSpecialOrder(int len, std::vector<size_t> &order)
 {
     int power2 = 1;
@@ -172,6 +176,23 @@ void setSpecialOrder(int len, std::vector<size_t> &order)
         }
         n += groupSize;
     }
+}
+
+static timeval getTime()
+{
+    timeval now;
+    gettimeofday(&now, NULL);
+    return now;
+}
+
+static double msElapsedFrom(timeval start)
+{
+    timeval now;
+
+    gettimeofday(&now, NULL);
+    long seconds = now.tv_sec - start.tv_sec;
+    long microseconds = now.tv_usec - start.tv_usec;
+    return (seconds * 1000) + (microseconds / 1000.0);
 }
 
 //*************************************************************************
@@ -265,23 +286,6 @@ static void buildPairsTree(std::vector<Pair> &pairs, std::vector<int> &result)
         return buildPairsTree(parents, result);
     DEBUG(std::cout << parents[0] << std::endl;)
     sortTree(parents, result);
-}
-
-static timeval getTime()
-{
-    timeval now;
-    gettimeofday(&now, NULL);
-    return now;
-}
-
-static double msElapsedFrom(timeval start)
-{
-    timeval now;
-
-    gettimeofday(&now, NULL);
-    long seconds = now.tv_sec - start.tv_sec;
-    long microseconds = now.tv_usec - start.tv_usec;
-    return (seconds * 1000) + (static_cast<double>(microseconds) / 1000);
 }
 
 void mergeInsert(std::vector<int> &src)
