@@ -3,10 +3,42 @@
 DEBUG(int compPairing = 0;)
 DEBUG(int compInsertion = 0;)
 
+//*************************************************************************
+//*******************              UTILS              *********************
+//*************************************************************************
+
 static std::ostream &writeN(std::ostream &os, const std::string &value, int n)
 {
     for (int i = 0; i < n; i++)
         os << value;
+    return os;
+}
+
+static timeval getTime()
+{
+    timeval now;
+    gettimeofday(&now, NULL);
+    return now;
+}
+
+static double msElapsedFrom(timeval start)
+{
+    timeval now;
+
+    gettimeofday(&now, NULL);
+    long seconds = now.tv_sec - start.tv_sec;
+    long microseconds = now.tv_usec - start.tv_usec;
+    return (seconds * 1000) + (microseconds / 1000.0);
+}
+
+//*************************************************************************
+//*******************             PRINTS              *********************
+//*************************************************************************
+
+std::ostream &operator<<(std::ostream &os, std::vector<Pair> &pairs)
+{
+    for (std::vector<Pair>::iterator it = pairs.begin(); it != pairs.end(); it++)
+        os << it->value << ' ';
     return os;
 }
 
@@ -25,24 +57,28 @@ std::ostream &operator<<(std::ostream &os, Pair &pair)
 
 std::ostream &operator<<(std::ostream &os, std::vector<int> &values)
 {
-    for (std::vector<int>::iterator it = values.begin(); it != values.end(); it++)
-        os << *it << ' ';
-    return os;
+    if (values.size() <= 30)
+    {
+        for (std::vector<int>::iterator it = values.begin(); it != values.end(); it++)
+            os << *it << ' ';
+        return os;
+    }
+    std::vector<int> begin(values.begin(), values.begin() + 14);
+    std::vector<int> end(values.end() - 14, values.end());
+    return os << begin << "... " << end;
 }
 
-std::ostream &operator<<(std::ostream &os, std::vector<Pair> &pairs)
+std::ostream &operator<<(std::ostream &os, std::deque<int> &values)
 {
-    for (std::vector<Pair>::iterator it = pairs.begin(); it != pairs.end(); it++)
-        os << it->value << ' ';
-    return os;
-}
-
-Pair *getPairNoNull(std::vector<Pair *> &pairs)
-{
-    for (std::vector<Pair *>::iterator it = pairs.begin(); it != pairs.end(); it++)
-        if (*it)
-            return *it;
-    return NULL;
+    if (values.size() <= 30)
+    {
+        for (std::deque<int>::iterator it = values.begin(); it != values.end(); it++)
+            os << *it << ' ';
+        return os;
+    }
+    std::vector<int> begin(values.begin(), values.begin() + 14);
+    std::vector<int> end(values.end() - 14, values.end());
+    return os << begin << "... " << end;
 }
 
 std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
@@ -89,6 +125,10 @@ std::ostream &operator<<(std::ostream &os, std::vector<Pair *> &pairs)
         os << children;
     return os;
 }
+
+//*************************************************************************
+//*******************           CLASS PAIRE           *********************
+//*************************************************************************
 
 Pair::~Pair()
 {
@@ -153,63 +193,8 @@ Pair &Pair::operator=(const Pair &src)
 }
 
 //*************************************************************************
-//*******************              UTILS              *********************
-//*************************************************************************
-
-void setSpecialOrder(int len, std::vector<size_t> &order)
-{
-    int power2 = 1;
-    int groupSize = 0;
-    int n = 0;
-
-    while (n < len)
-    {
-        power2 *= 2;
-        groupSize = power2 - groupSize;
-        if (n + groupSize > len)
-            groupSize = len - n;
-        int index = n + groupSize - 1;
-        while (index >= n)
-        {
-            order.push_back(index);
-            index--;
-        }
-        n += groupSize;
-    }
-}
-
-static timeval getTime()
-{
-    timeval now;
-    gettimeofday(&now, NULL);
-    return now;
-}
-
-static double msElapsedFrom(timeval start)
-{
-    timeval now;
-
-    gettimeofday(&now, NULL);
-    long seconds = now.tv_sec - start.tv_sec;
-    long microseconds = now.tv_usec - start.tv_usec;
-    return (seconds * 1000) + (microseconds / 1000.0);
-}
-
-//*************************************************************************
 //*******************       VECTOR IMPLEMENTAION      *********************
 //*************************************************************************
-
-static void readValues(std::vector<int> &src, std::vector<Pair> &pairs)
-{
-    for (std::vector<int>::iterator it = src.begin(); it != src.end(); it++)
-        pairs.push_back(Pair(*it));
-}
-
-static void writeResult(std::vector<Pair> &sorted, std::vector<int> &result)
-{
-    for (std::vector<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
-        result.push_back(it->value);
-}
 
 static std::vector<Pair>::iterator findInsertionPoint(std::vector<Pair> &pairs, Pair &toInsert, size_t limitRight)
 {
@@ -242,7 +227,7 @@ static void sortTree(std::vector<Pair> &sorted, std::vector<int> &result)
     std::vector<size_t> limitsRight;
 
     if (!sorted[0].b)
-        return writeResult(sorted, result);
+        return pairsToIntegers(sorted, result);
     if (sorted[0].a)
         biggers.push_back(*(sorted[0].a));
     size_t biggerIndex = biggers.size();
@@ -267,10 +252,8 @@ static void sortTree(std::vector<Pair> &sorted, std::vector<int> &result)
     setSpecialOrder(lowers.size(), order);
     for (size_t i = 0; i < lowers.size(); i++)
         insertInBiggers(lowers[order[i]], biggers, limitsRight[order[i]] + nbInserted++);
-
     // for (size_t i = 0; i < lowers.size(); i++)
     //     insertInBiggers(lowers[i], biggers, limitsRight[i] + nbInserted++);
-
     sortTree(biggers, result);
 }
 
@@ -288,7 +271,7 @@ static void buildPairsTree(std::vector<Pair> &pairs, std::vector<int> &result)
     sortTree(parents, result);
 }
 
-void mergeInsert(std::vector<int> &src)
+void mergeInsert(std::vector<int> &values)
 {
     DEBUG(compPairing = 0;)
     DEBUG(compInsertion = 0;)
@@ -296,7 +279,7 @@ void mergeInsert(std::vector<int> &src)
     std::vector<int> result;
     std::vector<Pair> pairs;
     timeval start = getTime();
-    readValues(src, pairs);
+    integersToPairs(values, pairs);
     buildPairsTree(pairs, result);
     double elapsed = msElapsedFrom(start);
 
@@ -305,7 +288,95 @@ void mergeInsert(std::vector<int> &src)
                     << compInsertion << " insertion = "
                     << compPairing + compInsertion << std::endl;)
 
-    std::cout << "Before: " << src << std::endl;
+    std::cout << "Before: " << values << std::endl;
     std::cout << "After:  " << result << std::endl;
-    std::cout << "Time to process " << src.size() << " elements with std::vector : " << elapsed << " ms" << std::endl;
+    std::cout << "Time to process " << values.size() << " elements with std::vector : " << elapsed << " ms" << std::endl;
+}
+
+//*************************************************************************
+//*******************       DEQUE IMPLEMENTAION       *********************
+//*************************************************************************
+
+static std::deque<Pair>::iterator findInsertionPoint(std::deque<Pair> &pairs, Pair &toInsert, size_t limitRight)
+{
+    std::deque<Pair>::iterator left = pairs.begin();
+    std::deque<Pair>::iterator right = pairs.begin() + limitRight + 1;
+    while (left < right)
+    {
+        size_t size = right - left;
+        std::deque<Pair>::iterator it = left + size / 2;
+        DEBUG(compInsertion++;)
+        if (it->value <= toInsert.value)
+            left = it + 1;
+        else
+            right = it;
+    }
+    return left;
+}
+
+static void insertInBiggers(Pair &pair, std::deque<Pair> &biggers, size_t limitRight)
+{
+    std::deque<Pair>::iterator insertionPoint = findInsertionPoint(biggers, pair, limitRight);
+    biggers.insert(insertionPoint, pair);
+}
+
+static void sortTree(std::deque<Pair> &sorted, std::deque<int> &result)
+{
+    std::deque<Pair> biggers;
+    std::deque<Pair> lowers;
+    std::deque<size_t> limitsRight;
+
+    if (!sorted[0].b)
+        return pairsToIntegers(sorted, result);
+    if (sorted[0].a)
+        biggers.push_back(*(sorted[0].a));
+    size_t biggerIndex = biggers.size();
+
+    for (std::deque<Pair>::iterator it = sorted.begin(); it != sorted.end(); it++)
+        biggers.push_back(*it->b);
+
+    for (std::deque<Pair>::iterator it = sorted.begin() + 1; it != sorted.end(); it++)
+    {
+        if (it->a)
+        {
+            lowers.push_back(*it->a);
+            limitsRight.push_back(biggerIndex);
+        }
+        biggerIndex++;
+    }
+
+    size_t nbInserted = 0;
+    std::vector<size_t> order;
+    setSpecialOrder(lowers.size(), order);
+    for (size_t i = 0; i < lowers.size(); i++)
+        insertInBiggers(lowers[order[i]], biggers, limitsRight[order[i]] + nbInserted++);
+
+    sortTree(biggers, result);
+}
+
+static void buildPairsTree(std::deque<Pair> &pairs, std::deque<int> &result)
+{
+    std::deque<Pair> parents;
+    std::deque<Pair>::iterator last = pairs.size() & 1 ? pairs.end() - 1 : pairs.end();
+    for (std::deque<Pair>::iterator it = pairs.begin(); it != last; it += 2)
+        parents.push_back(Pair(*it, *(it + 1)));
+    if (last != pairs.end())
+        parents.push_back(Pair(NULL, &(*last)));
+    if (parents.size() > 1)
+        return buildPairsTree(parents, result);
+    DEBUG(std::cout << parents[0] << std::endl;)
+    sortTree(parents, result);
+}
+
+void mergeInsert(std::deque<int> &values)
+{
+    std::deque<int> result;
+    std::deque<Pair> pairs;
+    timeval start = getTime();
+    integersToPairs(values, pairs);
+    buildPairsTree(pairs, result);
+    double elapsed = msElapsedFrom(start);
+    // std::cout << "Before: " << values << std::endl;
+    // std::cout << "After:  " << result << std::endl;
+    std::cout << "Time to process " << values.size() << " elements with std::deque  : " << elapsed << " ms" << std::endl;
 }
