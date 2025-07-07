@@ -1,7 +1,7 @@
 NAME			=	RPN
 DIR_SRC			=	./
 DIR_BUILD		=	./build
-SOURCES			=	RPN.cpp main.cpp 
+SOURCES			=	main.cpp RPN.cpp 
 SOURCES_NAME	=	$(basename $(SOURCES))
 OBJECTS			=	$(addsuffix .o, $(addprefix $(DIR_BUILD)/, $(SOURCES_NAME)))
 CFLAGS			=	-Wall -Wextra -Werror -std=c++98 -g
