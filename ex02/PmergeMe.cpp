@@ -226,6 +226,10 @@ static void sortTree(std::vector<Pair> &sorted, std::vector<int> &result)
     std::vector<Pair> lowers;
     std::vector<size_t> limitsRight;
 
+    biggers.reserve(sorted.size() * 2);
+    lowers.reserve(sorted.size());
+    limitsRight.reserve(sorted.size());
+
     if (!sorted[0].b)
         return pairsToIntegers(sorted, result);
     if (sorted[0].a)
@@ -260,6 +264,7 @@ static void sortTree(std::vector<Pair> &sorted, std::vector<int> &result)
 static void buildPairsTree(std::vector<Pair> &pairs, std::vector<int> &result)
 {
     std::vector<Pair> parents;
+    parents.reserve(pairs.size() / 2 + 1);
     std::vector<Pair>::iterator last = pairs.size() & 1 ? pairs.end() - 1 : pairs.end();
     for (std::vector<Pair>::iterator it = pairs.begin(); it != last; it += 2)
         parents.push_back(Pair(*it, *(it + 1)));
@@ -267,7 +272,7 @@ static void buildPairsTree(std::vector<Pair> &pairs, std::vector<int> &result)
         parents.push_back(Pair(NULL, &(*last)));
     if (parents.size() > 1)
         return buildPairsTree(parents, result);
-    DEBUG(std::cout << parents[0] << std::endl;)
+    // DEBUG(std::cout << parents[0] << std::endl;)
     sortTree(parents, result);
 }
 
@@ -278,6 +283,8 @@ void mergeInsert(std::vector<int> &values)
 
     std::vector<int> result;
     std::vector<Pair> pairs;
+    result.reserve(values.size());
+    pairs.reserve((values.size() / 2) + 1);
     timeval start = getTime();
     integersToPairs(values, pairs);
     buildPairsTree(pairs, result);
@@ -364,7 +371,7 @@ static void buildPairsTree(std::deque<Pair> &pairs, std::deque<int> &result)
         parents.push_back(Pair(NULL, &(*last)));
     if (parents.size() > 1)
         return buildPairsTree(parents, result);
-    DEBUG(std::cout << parents[0] << std::endl;)
+    // DEBUG(std::cout << parents[0] << std::endl;)
     sortTree(parents, result);
 }
 
@@ -372,6 +379,7 @@ void mergeInsert(std::deque<int> &values)
 {
     std::deque<int> result;
     std::deque<Pair> pairs;
+
     timeval start = getTime();
     integersToPairs(values, pairs);
     buildPairsTree(pairs, result);
